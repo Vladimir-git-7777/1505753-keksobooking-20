@@ -13,6 +13,8 @@ var CHECKIN = ['12:00', '13:00', '14:00'];
 var FEATURES = ['wifi', ' dishwasher', 'parking', 'washer', 'elevator', 'conditioner'];
 var DESCRIPTION = ['aaaaaaaaa', 'bbbbbbbb', 'cccccccc', 'dddddd', 'eeeeeee', 'fffffff', 'uuuuuuuu', 'vvvvvvvv'];
 var PHOTOS = ['http://o0.github.io/assets/images/tokyo/hotel1.jpg', 'http://o0.github.io/assets/images/tokyo/hotel2.jpg', 'http://o0.github.io/assets/images/tokyo/hotel3.jpg'];
+var MAIN_PIN_WIDTH = 40;
+var MAIN_PIN_HEIGH = 44;
 
 var setIndex = function (i, arrayLength) {
   return i % arrayLength;
@@ -74,7 +76,6 @@ var createObject = function (numberObjects) {
 
 var createTemplate = function () {
   var template = document.querySelector('#pin').content;
-  // console.log('template', template);
   return template;
 };
 
@@ -96,10 +97,168 @@ var fillBlockElements = function () {
 var blockMapPins = document.querySelector('.map__pins');
 var blockMap = document.querySelector('.map');
 createObject(NUMBER_OBJECTS);
-blockMap.classList.remove('map--faded');
 var pinTemplate = createTemplate();
 var fragment = fillBlockElements(pinTemplate);
 blockMapPins.appendChild(fragment);
+
+
+
+
+
+var setDisabled = function (form, selector) {
+  var fields = form.querySelectorAll(selector);
+  for (var field of fields) {
+    field.setAttribute("disabled", "true")
+  }
+}
+
+var setEnabled = function (form, selector) {
+  var findFields = form.querySelectorAll(selector);
+  for (var field of findFields) {
+    field.removeAttribute('disabled')
+  }
+}
+
+var adForm = document.querySelector('.ad-form');
+var mapFilters = document.querySelector('.map__filters');
+
+var setDisabledAdForm = function () {
+  setDisabled(adForm, 'fieldset');
+}
+
+var setEnabledAdForm = function () {
+  setEnabled(adForm, 'fieldset');
+}
+
+var setDisabledMapFilters = function () {
+  setDisabled(mapFilters, 'select');
+  setDisabled(mapFilters, 'fieldset');
+}
+
+var setEnabledMapFilters = function () {
+  setEnabled(mapFilters, 'select');
+  setEnabled(mapFilters, 'fieldset');
+}
+
+setDisabledAdForm(adForm);
+setDisabledMapFilters(mapFilters);
+
+var mapPinMain = document.querySelector('.map__pin--main');
+
+var findOffset = function (selector) {
+  var xOffset = mapPinMain.style.left.slice(0, -2);
+  var yOffset = mapPinMain.style.top.slice(0, -2);
+  var selector = mapPinMain.querySelector(selector);
+  return { xOffset, yOffset, selector };
+}
+
+var setCoordinateAddress = function (x, y) {
+  mapPinMain.style.left = x + 'px';
+  mapPinMain.style.top = y + 'px';
+  var coordinates = `${x}  ${y}`;
+  adForm.querySelector('#address').value = coordinates;
+}
+
+var setStartMapPinMainCoordinates = function () {
+  var offset = findOffset('svg');
+  var x = +offset.xOffset + offset.selector.attributes[1].value / 2;
+  var y = +offset.yOffset + offset.selector.attributes[2].value / 2;
+  setCoordinateAddress(x, y);
+}
+
+setStartMapPinMainCoordinates();
+
+var setMapPinMainCoordinates = function () {
+  var offset = findOffset('img');
+  var x = +offset.xOffset + offset.selector.width / 2;
+  var y = +offset.yOffset + offset.selector.height;
+  setCoordinateAddress(x, y);
+}
+
+var putPageActiveMode = function () {
+  blockMap.classList.remove('map--faded');
+  adForm.classList.remove('ad-form--disabled');
+  setMapPinMainCoordinates();
+  setEnabledAdForm(adForm);
+  setEnabledMapFilters(mapFilters);
+
+}
+
+mapPinMain.addEventListener('mousedown', function (evt) {
+  if (evt.which === 1) {
+    putPageActiveMode();
+  }
+});
+
+mapPinMain.addEventListener('keydown', function (evt) {
+  if (evt.key === 'Enter') {
+    putPageActiveMode();
+  }
+});
+
+
+var titleInput = document.querySelector('#title');
+titleInput.addEventListener('invalid', function (evt) {
+  if (titleInput.validity.tooShort) {
+    titleInput.setCustomValidity('Поле должно состоять минимум из 30 символов');
+  } else if (titleInput.validity.tooLong) {
+    titleInput.setCustomValidity('Поле не должно превышать 100 символов');
+  } else if (titleInput.validity.valueMissing) {
+    titleInput.setCustomValidity('Обязательное поле');
+  } else {
+    titleInput.setCustomValidity('');
+  }
+});
+
+var priceInput = document.querySelector('#price');
+priceInput.setAttribute("min", 1000);
+console.log('priceInput', priceInput);
+priceInput.addEventListener('invalid', function (evt) {
+  if (priceInput.validity.rangeOverflow) {
+    priceInput.setCustomValidity('Максимальное значение  1 000 000 руб. ');
+  } else if (priceInput.validity.valueMissing) {
+    priceInput.setCustomValidity('Обязательное поле');
+  } else {
+    priceInput.setCustomValidity('');
+  }
+});
+
+var setAttributeMinValue = function (minPrice) {
+  switch (minPrice) {
+    case 'bungalo':
+      priceInput.setAttribute("min", 0);
+      priceInput.placeholder = 0;
+      break;
+    case 'flat':
+      priceInput.setAttribute("min", 1000);
+      priceInput.placeholder = 1000;
+      break;
+    case 'house':
+      priceInput.setAttribute("min", 5000);
+      priceInput.placeholder = 5000;
+      break
+    default:
+      priceInput.setAttribute("min", 10000);
+      priceInput.placeholder = 10000;
+  }
+}
+
+document.querySelector('#type').addEventListener('change', function () {
+  var minPrice = this.value;
+  console.log('minPrice', minPrice);
+  setAttributeMinValue(minPrice);
+  console.log('priceInput', priceInput);
+})
+
+
+
+
+
+
+
+
+
+
 
 
 
