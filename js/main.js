@@ -13,8 +13,8 @@ var CHECKIN = ['12:00', '13:00', '14:00'];
 var FEATURES = ['wifi', ' dishwasher', 'parking', 'washer', 'elevator', 'conditioner'];
 var DESCRIPTION = ['aaaaaaaaa', 'bbbbbbbb', 'cccccccc', 'dddddd', 'eeeeeee', 'fffffff', 'uuuuuuuu', 'vvvvvvvv'];
 var PHOTOS = ['http://o0.github.io/assets/images/tokyo/hotel1.jpg', 'http://o0.github.io/assets/images/tokyo/hotel2.jpg', 'http://o0.github.io/assets/images/tokyo/hotel3.jpg'];
-var MAIN_PIN_WIDTH = 40;
-var MAIN_PIN_HEIGH = 44;
+// var MAIN_PIN_WIDTH = 65;
+// var MAIN_PIN_HEIGH = 65;
 
 var setIndex = function (i, arrayLength) {
   return i % arrayLength;
@@ -24,7 +24,7 @@ var setRandomLocation = function (min, max) {
   return Math.round(Math.random() * (max - min) + min);
 };
 
-function shuffle(array) {
+var shuffle = function (array) {
   var counter = array.length, temp, index;
   while (counter--) {
     index = (Math.random() * counter) | 0;
@@ -94,17 +94,6 @@ var fillBlockElements = function () {
   return fragment;
 };
 
-var blockMapPins = document.querySelector('.map__pins');
-var blockMap = document.querySelector('.map');
-createObject(NUMBER_OBJECTS);
-var pinTemplate = createTemplate();
-var fragment = fillBlockElements(pinTemplate);
-blockMapPins.appendChild(fragment);
-
-
-
-
-
 var setDisabled = function (form, selector) {
   var fields = form.querySelectorAll(selector);
   for (var field of fields) {
@@ -117,13 +106,6 @@ var setEnabled = function (form, selector) {
   for (var field of findFields) {
     field.removeAttribute('disabled')
   }
-}
-
-var adForm = document.querySelector('.ad-form');
-var mapFilters = document.querySelector('.map__filters');
-
-var setDisabledAdForm = function () {
-  setDisabled(adForm, 'fieldset');
 }
 
 var setEnabledAdForm = function () {
@@ -140,10 +122,9 @@ var setEnabledMapFilters = function () {
   setEnabled(mapFilters, 'fieldset');
 }
 
-setDisabledAdForm(adForm);
-setDisabledMapFilters(mapFilters);
-
-var mapPinMain = document.querySelector('.map__pin--main');
+var setDisabledAdForm = function () {
+  setDisabled(adForm, 'fieldset');
+}
 
 var findOffset = function (selector) {
   var xOffset = mapPinMain.style.left.slice(0, -2);
@@ -153,10 +134,12 @@ var findOffset = function (selector) {
 }
 
 var setCoordinateAddress = function (x, y) {
-  mapPinMain.style.left = x + 'px';
-  mapPinMain.style.top = y + 'px';
+  // mapPinMain.style.left = x + 'px';
+  // mapPinMain.style.top = y + 'px';
+  var address = adForm.querySelector('#address');
   var coordinates = `${x}  ${y}`;
-  adForm.querySelector('#address').value = coordinates;
+  address.value = coordinates;
+  address.setAttribute("disabled", "true")
 }
 
 var setStartMapPinMainCoordinates = function () {
@@ -165,8 +148,6 @@ var setStartMapPinMainCoordinates = function () {
   var y = +offset.yOffset + offset.selector.attributes[2].value / 2;
   setCoordinateAddress(x, y);
 }
-
-setStartMapPinMainCoordinates();
 
 var setMapPinMainCoordinates = function () {
   var offset = findOffset('img');
@@ -184,42 +165,17 @@ var putPageActiveMode = function () {
 
 }
 
+var mapPinMain = document.querySelector('.map__pin--main');
 mapPinMain.addEventListener('mousedown', function (evt) {
   if (evt.which === 1) {
     putPageActiveMode();
   }
 });
 
+
 mapPinMain.addEventListener('keydown', function (evt) {
   if (evt.key === 'Enter') {
     putPageActiveMode();
-  }
-});
-
-
-var titleInput = document.querySelector('#title');
-titleInput.addEventListener('invalid', function (evt) {
-  if (titleInput.validity.tooShort) {
-    titleInput.setCustomValidity('Поле должно состоять минимум из 30 символов');
-  } else if (titleInput.validity.tooLong) {
-    titleInput.setCustomValidity('Поле не должно превышать 100 символов');
-  } else if (titleInput.validity.valueMissing) {
-    titleInput.setCustomValidity('Обязательное поле');
-  } else {
-    titleInput.setCustomValidity('');
-  }
-});
-
-var priceInput = document.querySelector('#price');
-priceInput.setAttribute("min", 1000);
-console.log('priceInput', priceInput);
-priceInput.addEventListener('invalid', function (evt) {
-  if (priceInput.validity.rangeOverflow) {
-    priceInput.setCustomValidity('Максимальное значение  1 000 000 руб. ');
-  } else if (priceInput.validity.valueMissing) {
-    priceInput.setCustomValidity('Обязательное поле');
-  } else {
-    priceInput.setCustomValidity('');
   }
 });
 
@@ -243,15 +199,106 @@ var setAttributeMinValue = function (minPrice) {
   }
 }
 
+var syncTimeinTimeout = function () {
+  var first = document.querySelector('#timein'),
+    second = document.querySelector('#timeout');
+  first.onchange = function () { second.selectedIndex = first.selectedIndex; };
+  second.onchange = function () { first.selectedIndex = second.selectedIndex; };
+}
+
+var setDefaultDisableCapacity = function () {
+  var fields = document.querySelector('#capacity').querySelectorAll('option');
+  for (var field of fields) {
+    if (field.value === '1') { continue };
+    field.setAttribute("disabled", "true")
+  }
+}
+
+var setInputRestrictions = function (first, second, fieldsSecond) {
+  first.onchange = function () {
+    second.value = first.value;
+    if (first.value === '100') {
+      second.value = '0';
+    }
+    setDisabled(second, 'option');
+    for (var fieldSecond of fieldsSecond) {
+      if (first.value === '1') {
+        if (fieldSecond.value === '1') { fieldSecond.removeAttribute('disabled') };
+      }
+      else if (first.value === '2') {
+        if (fieldSecond.value === '1' || fieldSecond.value === '2') { fieldSecond.removeAttribute('disabled') };
+      }
+      else if (first.value === '3') {
+        if (fieldSecond.value === '1' || fieldSecond.value === '2' || fieldSecond.value === '3') { fieldSecond.removeAttribute('disabled') };
+      }
+      else {
+        if (fieldSecond.value === '0') { fieldSecond.removeAttribute('disabled') };
+      }
+      console.log('fieldSecond', fieldSecond);
+    }
+  };
+}
+
+var blockMapPins = document.querySelector('.map__pins');
+var blockMap = document.querySelector('.map');
+createObject(NUMBER_OBJECTS);
+var pinTemplate = createTemplate();
+var fragment = fillBlockElements(pinTemplate);
+blockMapPins.appendChild(fragment);
+
+var adForm = document.querySelector('.ad-form');
+var mapFilters = document.querySelector('.map__filters');
+
+var syncRoomNumberCapacity = function () {
+  var first = document.querySelector('#room_number'),
+    second = document.querySelector('#capacity'),
+    fieldsSecond = second.querySelectorAll('option');
+  setInputRestrictions(first, second, fieldsSecond);
+}
+
+setDisabledAdForm(adForm);
+setDisabledMapFilters(mapFilters);
+setStartMapPinMainCoordinates();
+
+var titleInput = document.querySelector('#title');
+
+titleInput.addEventListener('invalid', function (evt) {
+  if (titleInput.validity.tooShort) {
+    titleInput.setCustomValidity('Поле должно состоять минимум из 30 символов');
+  } else if (titleInput.validity.tooLong) {
+    titleInput.setCustomValidity('Поле не должно превышать 100 символов');
+  } else if (titleInput.validity.valueMissing) {
+    titleInput.setCustomValidity('Обязательное поле');
+  } else {
+    titleInput.setCustomValidity('');
+  }
+});
+
+var priceInput = document.querySelector('#price');
+priceInput.setAttribute("min", 1000);
+// console.log('priceInput', priceInput);
+priceInput.addEventListener('invalid', function (evt) {
+  if (priceInput.validity.rangeOverflow) {
+    priceInput.setCustomValidity('Максимальное значение  1 000 000 руб. ');
+  } else if (priceInput.validity.valueMissing) {
+    priceInput.setCustomValidity('Обязательное поле');
+  } else {
+    priceInput.setCustomValidity('');
+  }
+});
+
 document.querySelector('#type').addEventListener('change', function () {
   var minPrice = this.value;
   console.log('minPrice', minPrice);
   setAttributeMinValue(minPrice);
-  console.log('priceInput', priceInput);
+  // console.log('priceInput', priceInput);
 })
 
+syncTimeinTimeout();
 
+setDefaultDisableCapacity();
 
+syncRoomNumberCapacity();
 
 
 
